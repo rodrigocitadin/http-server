@@ -40,10 +40,17 @@ func handleConnection(conn net.Conn) {
 		return
 	}
 
-	fmt.Printf("Request: %s\n", reqBuffer[:n])
-
 	req := string(reqBuffer[:n])
-	path := strings.Split(req, " ")[1]
+	sReq := strings.Split(req, "\r\n")
+
+	// fmt.Printf("\n%+q", sReq)
+
+	requestLine := sReq[0]
+	headers := getHeaders(sReq[1:])
+
+	fmt.Printf("\n%+q", headers)
+
+	path := strings.Split(requestLine, " ")[1]
 
 	switch {
 	case path == "/":
@@ -51,7 +58,22 @@ func handleConnection(conn net.Conn) {
 	case strings.Split(path, "/")[1] == "echo":
 		message := strings.Split(path, "/")[2]
 		conn.Write([]byte(fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(message), message)))
+	case strings.Split(path, "/")[1] == "user-agent":
+		userAgent := "test"
+		conn.Write([]byte(fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(userAgent), userAgent)))
 	default:
 		conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
 	}
+}
+
+func getHeaders(sReq []string) (headers []string) {
+	for _, line := range sReq {
+		if line == "" {
+			return
+		}
+
+		headers = append(headers, line)
+	}
+
+	return
 }
