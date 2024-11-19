@@ -43,12 +43,12 @@ func handleConnection(conn net.Conn) {
 	req := string(reqBuffer[:n])
 	sReq := strings.Split(req, "\r\n")
 
-	// fmt.Printf("\n%+q", sReq)
+	requestLine, headers, body := parseReq(sReq)
 
-	requestLine := sReq[0]
-	headers := getHeaders(sReq[1:])
-
-	fmt.Printf("\n%+q", headers)
+	fmt.Printf("\nReq Line: %s", requestLine)
+	fmt.Printf("\nHeaders: %+q", headers)
+	fmt.Printf("\nBody: %s", body)
+	fmt.Print("\r\n\r\n\r\n")
 
 	path := strings.Split(requestLine, " ")[1]
 
@@ -66,14 +66,16 @@ func handleConnection(conn net.Conn) {
 	}
 }
 
-func getHeaders(sReq []string) (headers []string) {
-	for _, line := range sReq {
+func parseReq(sReq []string) (requestLine string, headers []string, body string) {
+	requestLine = sReq[0]
+
+	for i, line := range sReq[1:] {
 		if line == "" {
+			body = strings.Join(sReq[i+1:], " ")
 			return
 		}
 
 		headers = append(headers, line)
 	}
-
 	return
 }
